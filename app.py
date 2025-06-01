@@ -103,48 +103,55 @@ elif halaman == "Distribusi Musik":
 
 # Halaman Rekomendasi Musik
 elif halaman == "Rekomendasi Musik":
-    st.title("🔍 Rekomendasi Musik Berdasarkan Fitur")
+    st.title("🔍 Rekomendasi Musik Berdasarkan Judul")
 
-    judul = st.text_input("Judul Musik")
-    artist = st.text_input("Nama Artis")
-    genre = st.text_input("Genre Musik")
-    subgenre = st.text_input("Subgenre Musik")
-    tempo = st.slider("Tempo", 50, 200, 120)
-    duration_ms = st.slider("Durasi (ms)", 60000, 400000, 180000)
-    energy = st.slider("Energy", 0.0, 1.0, 0.5)
-    danceability = st.slider("Danceability", 0.0, 1.0, 0.5)
+    judul = st.text_input("Masukkan Judul Musik")
 
     if st.button("Rekomendasikan"):
-        genre_tfidf = tfidf_genre.transform([genre])
-        subgenre_tfidf = tfidf_subgenre.transform([subgenre])
-        features_num = scaler.transform([[tempo, duration_ms, energy, danceability]])
+        lagu = df_clean[df_clean['judul_musik'].str.lower() == judul.lower()]
 
-        X_input = np.hstack([
-            genre_tfidf.toarray(),
-            subgenre_tfidf.toarray(),
-            features_num
-        ])
-
-        pred = model.predict(X_input)[0]
-        kategori = label_enc.inverse_transform([pred])[0]
-
-        st.success(f"Musik '{judul}' oleh {artist} diprediksi memiliki popularitas: **{kategori}**")
-
-        # Tambahkan ke riwayat
-        st.session_state.history.append({
-            'Judul': judul,
-            'Artis': artist,
-            'Genre': genre,
-            'Subgenre': subgenre,
-            'Prediksi': kategori
-        })
-
-        # Rekomendasi serupa berdasarkan genre dan urut popularitas
-        df_rekomendasi = df_clean[df_clean['genre'].str.lower() == genre.lower()]
-        df_rekomendasi = df_rekomendasi.sort_values(by='popularity', ascending=False).head(5)
-
-        st.subheader("🎧 Musik Serupa Berdasarkan Genre")
-        if not df_rekomendasi.empty:
-            st.dataframe(df_rekomendasi[['judul_musik', 'artist', 'genre', 'popularity']])
+        if lagu.empty:
+            st.warning("Judul tidak ditemukan dalam dataset.")
         else:
-            st.info("Tidak ditemukan musik serupa untuk genre tersebut.")
+            fitur = lagu.iloc[0]
+            genre = fitur['genre']
+            subgenre = fitur['subgenre']
+            tempo = fitur['tempo']
+            duration_ms = fitur['duration_ms']
+            energy = fitur['energy']
+            danceability = fitur['danceability']
+            artist = fitur['artist']
+
+            genre_tfidf = tfidf_genre.transform([genre])
+            subgenre_tfidf = tfidf_subgenre.transform([subgenre])
+            features_num = scaler.transform([[tempo, duration_ms, energy, danceability]])
+
+            X_input = np.hstack([
+                genre_tfidf.toarray(),
+                subgenre_tfidf.toarray(),
+                features_num
+            ])
+
+            pred = model.predict(X_input)[0]
+            kategori = label_enc.inverse_transform([pred])[0]
+
+            st.success(f"Musik '{judul}' oleh {artist} diprediksi memiliki popularitas: **{kategori}**")
+
+            # Tambahkan ke riwayat
+            st.session_state.history.append({
+                'Judul': judul,
+                'Artis': artist,
+                'Genre': genre,
+                'Subgenre': subgenre,
+                'Prediksi': kategori
+            })
+
+            # Rekomendasi serupa berdasarkan genre dan urut popularitas
+            df_rekomendasi = df_clean[df_clean['genre'].str.lower() == genre.lower()]
+            df_rekomendasi = df_rekomendasi.sort_values(by='popularity', ascending=False).head(5)
+
+            st.subheader("🎧 Musik Serupa Berdasarkan Genre")
+            if not df_rekomendasi.empty:
+                st.dataframe(df_rekomendasi[['judul_musik', 'artist', 'genre', 'popularity']])
+            else:
+                st.info("Tidak ditemukan musik serupa untuk genre tersebut.")
