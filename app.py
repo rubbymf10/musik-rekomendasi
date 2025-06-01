@@ -73,13 +73,13 @@ if 'history' not in st.session_state:
 if 'recommendation_table' not in st.session_state:
     st.session_state.recommendation_table = pd.DataFrame()
 
-# Navigasi
-st.sidebar.title("Navigasi")
+# Dashboard
+st.sidebar.title("Dashboard")
 halaman = st.sidebar.radio("Pilih Halaman", ["Beranda", "Distribusi Musik", "Rekomendasi Musik"])
 
 # Halaman Beranda
 if halaman == "Beranda":
-    st.title("🎵 Beranda Musik Populer")
+    st.title("🎵 Musik Populer")
     st.subheader("10 Musik Terpopuler")
     top10 = df.sort_values(by='popularity', ascending=False).head(10)[['judul_musik', 'artist', 'popularity']]
     st.dataframe(top10.style.format({'popularity': '{:.0f}'}))
