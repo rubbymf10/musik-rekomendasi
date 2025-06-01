@@ -223,7 +223,7 @@ elif halaman == "Distribusi Musik":
     ax2.set_ylabel('Genre')
     st.pyplot(fig2)
 
-    st.subheader("Confusion Matrix Model Random Forest (Popularitas)")
+
     cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=label_enc.classes_)
     fig_cm, ax_cm = plt.subplots(figsize=(6,6))
