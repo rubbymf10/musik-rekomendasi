@@ -8,14 +8,102 @@ from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-import joblib
+import base64
+
+# --- Styling dark mode ala Spotify ---
+st.markdown("""
+    <style>
+    /* Background & font */
+    .main, .block-container {
+        background-color: #121212;
+        color: #FFFFFF;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    /* Sidebar */
+    .css-1d391kg {background-color: #181818;}
+    .css-1d391kg .css-14xtw13 {color: #b3b3b3;}
+    /* Title */
+    h1, h2, h3, h4 {
+        color: #1DB954;
+    }
+    /* Dataframe */
+    .dataframe tbody tr th, .dataframe tbody tr td {
+        border-color: #333333;
+    }
+    /* Buttons */
+    button[kind="primary"] {
+        background-color: #1DB954;
+        color: #FFFFFF;
+        border-radius: 20px;
+        border: none;
+        padding: 8px 20px;
+    }
+    button[kind="primary"]:hover {
+        background-color: #1ed760;
+    }
+    /* Input box */
+    .stTextInput>div>div>input {
+        background-color: #222222;
+        color: #FFFFFF;
+        border: none;
+        border-radius: 8px;
+        padding: 8px;
+    }
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #1DB954;
+      border-radius: 4px;
+    }
+    /* Card musik sederhana */
+    .music-card {
+        background-color: #282828;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    .music-card:hover {
+        background-color: #333333;
+    }
+    .music-cover {
+        width: 50px;
+        height: 50px;
+        background: #555555;
+        border-radius: 6px;
+        flex-shrink: 0;
+    }
+    .music-info {
+        flex-grow: 1;
+    }
+    .music-title {
+        font-weight: 600;
+        font-size: 16px;
+        margin: 0;
+    }
+    .music-artist {
+        color: #b3b3b3;
+        margin: 0;
+        font-size: 14px;
+    }
+    .popularity {
+        color: #1DB954;
+        font-weight: 700;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # Load data
 @st.cache_data
 def load_data():
     df = pd.read_csv('musik.csv')
     df_clean = df.dropna(subset=['popularity', 'genre', 'subgenre', 'tempo', 'duration_ms', 'energy', 'danceability'])
-
     low_thresh = df_clean['popularity'].quantile(0.33)
     high_thresh = df_clean['popularity'].quantile(0.66)
 
@@ -29,20 +117,16 @@ def load_data():
 
     df_clean['pop_category'] = df_clean['popularity'].apply(categorize_popularity)
     df_clean = df_clean.dropna(subset=['pop_category'])
-
     label_enc = LabelEncoder()
     df_clean['pop_encoded'] = label_enc.fit_transform(df_clean['pop_category'])
-
     return df, df_clean, label_enc
 
 df, df_clean, label_enc = load_data()
 
-# Train model once, juga kembalikan data untuk evaluasi
 @st.cache_resource
 def train_model(df_clean):
     tfidf_genre = TfidfVectorizer()
     tfidf_subgenre = TfidfVectorizer()
-
     genre_tfidf = tfidf_genre.fit_transform(df_clean['genre'])
     subgenre_tfidf = tfidf_subgenre.fit_transform(df_clean['subgenre'])
 
@@ -57,45 +141,57 @@ def train_model(df_clean):
     y = df_clean['pop_encoded']
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
-
     model = RandomForestClassifier(random_state=42)
     model.fit(X_train, y_train)
-
     y_pred = model.predict(X_test)
-
     return model, tfidf_genre, tfidf_subgenre, scaler, X_test, y_test, y_pred
 
 model, tfidf_genre, tfidf_subgenre, scaler, X_test, y_test, y_pred = train_model(df_clean)
 
-# Session state for history
 if 'history' not in st.session_state:
     st.session_state.history = []
 if 'recommendation_table' not in st.session_state:
     st.session_state.recommendation_table = pd.DataFrame()
 
-# Dashboard
-st.sidebar.title("Dashboard")
-halaman = st.sidebar.radio("Pilih Halaman", ["Beranda", "Distribusi Musik", "Rekomendasi Musik"])
+# Sidebar dengan icon sederhana
+with st.sidebar:
+    st.markdown('<h2 style="color:#1DB954; margin-bottom: 15px;">🎵 MySpotify</h2>', unsafe_allow_html=True)
+    halaman = st.radio("", ["Beranda", "Distribusi Musik", "Rekomendasi Musik"], index=0, key="page_select")
+
+# Fungsi buat card musik seperti Spotify
+def music_card(title, artist, popularity):
+    st.markdown(f"""
+    <div class="music-card">
+        <div class="music-cover"></div>
+        <div class="music-info">
+            <p class="music-title">{title}</p>
+            <p class="music-artist">{artist}</p>
+        </div>
+        <div class="popularity">{int(popularity)}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Halaman Beranda
 if halaman == "Beranda":
-    st.title("🎵 Musik Populer")
-    st.subheader("10 Musik Terpopuler")
-    top10 = df.sort_values(by='popularity', ascending=False).head(10)[['judul_musik', 'artist', 'popularity']]
-    st.dataframe(top10.style.format({'popularity': '{:.0f}'}))
+    st.header("Top 10 Musik Terpopuler")
+    top10 = df.sort_values(by='popularity', ascending=False).head(10)
+    for _, row in top10.iterrows():
+        music_card(row['judul_musik'], row['artist'], row['popularity'])
 
-    st.subheader("Riwayat Pencarian Rekomendasi")
+    st.markdown("---")
+    st.header("Riwayat Pencarian Rekomendasi")
     if st.session_state.history:
-        st.dataframe(pd.DataFrame(st.session_state.history))
+        for h in reversed(st.session_state.history[-5:]):  # show last 5 searches
+            st.markdown(f"- **{h['Judul']}** oleh {h['Artis']} (Genre: {h['Genre']}, Prediksi: {h['Prediksi']})")
     else:
         st.info("Belum ada pencarian.")
 
-    st.subheader("🎧 Rekomendasi Genre Terakhir")
+    st.markdown("---")
+    st.header("🎧 Rekomendasi Genre Terakhir")
     if not st.session_state.recommendation_table.empty:
-        st.dataframe(
-            st.session_state.recommendation_table[['judul_musik', 'artist', 'genre', 'popularity']]
-            .sort_values(by='popularity', ascending=False)
-            .style.format({'popularity': '{:.0f}'}))
+        df_show = st.session_state.recommendation_table.sort_values(by='popularity', ascending=False)
+        for _, row in df_show.iterrows():
+            music_card(row['judul_musik'], row['artist'], row['popularity'])
     else:
         st.info("Belum ada rekomendasi genre ditampilkan.")
 
@@ -106,31 +202,34 @@ if halaman == "Beranda":
 
 # Halaman Distribusi Musik
 elif halaman == "Distribusi Musik":
-    st.title("📊 Distribusi Musik")
+    st.header("Distribusi Musik")
 
     st.subheader("10 Artis Terpopuler")
     top_artists = df['artist'].value_counts().head(10)
-    fig1, ax1 = plt.subplots()
-    sns.barplot(x=top_artists.values, y=top_artists.index, ax=ax1)
+    fig1, ax1 = plt.subplots(figsize=(8, 4))
+    sns.barplot(x=top_artists.values, y=top_artists.index, ax=ax1, palette="Greens_d")
+    ax1.set_xlabel('Jumlah Lagu')
+    ax1.set_ylabel('Artis')
     st.pyplot(fig1)
 
     st.subheader("10 Genre Terpopuler")
     top_genres = df['genre'].value_counts().head(10)
-    fig2, ax2 = plt.subplots()
-    sns.barplot(x=top_genres.values, y=top_genres.index, ax=ax2)
+    fig2, ax2 = plt.subplots(figsize=(8, 4))
+    sns.barplot(x=top_genres.values, y=top_genres.index, ax=ax2, palette="Greens_d")
+    ax2.set_xlabel('Jumlah Lagu')
+    ax2.set_ylabel('Genre')
     st.pyplot(fig2)
 
     st.subheader("Confusion Matrix Model Random Forest (Popularitas)")
     cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=label_enc.classes_)
     fig_cm, ax_cm = plt.subplots(figsize=(6,6))
-    disp.plot(ax=ax_cm, cmap=plt.cm.Blues, colorbar=False)
+    disp.plot(ax=ax_cm, cmap=plt.cm.Greens, colorbar=False)
     st.pyplot(fig_cm)
 
 # Halaman Rekomendasi Musik
 elif halaman == "Rekomendasi Musik":
-    st.title("🔍 Rekomendasi Musik Berdasarkan Judul")
-
+    st.header("Rekomendasi Musik Berdasarkan Judul")
     judul = st.text_input("Masukkan Judul Musik")
 
     if st.button("Rekomendasikan"):
@@ -138,7 +237,6 @@ elif halaman == "Rekomendasi Musik":
             st.warning("Silakan masukkan judul musik terlebih dahulu.")
         else:
             lagu = df_clean[df_clean['judul_musik'].str.lower() == judul.lower()]
-
             if lagu.empty:
                 st.warning("Judul tidak ditemukan dalam dataset.")
             else:
@@ -166,7 +264,6 @@ elif halaman == "Rekomendasi Musik":
 
                 st.success(f"Musik '{judul}' oleh {artist} diprediksi memiliki popularitas: **{kategori}**")
 
-                # Tambahkan ke riwayat
                 df_rekomendasi = df_clean[df_clean['genre'].str.lower() == genre.lower()]
                 df_rekomendasi = df_rekomendasi.sort_values(by='popularity', ascending=False).head(5)
 
@@ -179,12 +276,8 @@ elif halaman == "Rekomendasi Musik":
                     'Rekomendasi': ', '.join(df_rekomendasi['judul_musik'].head(3).tolist())
                 })
 
-                # Simpan tabel rekomendasi terakhir untuk ditampilkan di Beranda
                 st.session_state.recommendation_table = df_rekomendasi
 
                 st.subheader("🎧 Musik Serupa Berdasarkan Genre")
-                if not df_rekomendasi.empty:
-                    st.dataframe(df_rekomendasi[['judul_musik', 'artist', 'genre', 'popularity']]
-                                 .style.format({'popularity': '{:.0f}'}))
-                else:
-                    st.info("Tidak ditemukan musik serupa untuk genre tersebut.")
+                for _, row in df_rekomendasi.iterrows():
+                    music_card(row['judul_musik'], row['artist'], row['popularity'])
