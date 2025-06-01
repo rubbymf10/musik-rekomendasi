@@ -138,3 +138,13 @@ elif halaman == "Rekomendasi Musik":
             'Subgenre': subgenre,
             'Prediksi': kategori
         })
+
+        # Rekomendasi serupa berdasarkan genre dan urut popularitas
+        df_rekomendasi = df_clean[df_clean['genre'].str.lower() == genre.lower()]
+        df_rekomendasi = df_rekomendasi.sort_values(by='popularity', ascending=False).head(5)
+
+        st.subheader("🎧 Musik Serupa Berdasarkan Genre")
+        if not df_rekomendasi.empty:
+            st.dataframe(df_rekomendasi[['judul_musik', 'artist', 'genre', 'popularity']])
+        else:
+            st.info("Tidak ditemukan musik serupa untuk genre tersebut.")
