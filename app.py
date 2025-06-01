@@ -223,12 +223,15 @@ elif halaman == "Distribusi Musik":
     ax2.set_ylabel('Genre')
     st.pyplot(fig2)
 
-#    st.subheader("Confusion Matrix Model Random Forest (Popularitas)")
-     cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
-#    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=label_enc.classes_)
-#    fig_cm, ax_cm = plt.subplots(figsize=(6,6))
-#    disp.plot(ax=ax_cm, cmap=plt.cm.Greens, colorbar=False)
-#    st.pyplot(fig_cm)
+    # Hitung confusion matrix tanpa menampilkannya
+    cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
+
+    # Jika di masa depan ingin ditampilkan, bisa aktifkan baris di bawah ini:
+    # disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=label_enc.classes_)
+    # fig_cm, ax_cm = plt.subplots(figsize=(6,6))
+    # disp.plot(ax=ax_cm, cmap=plt.cm.Greens, colorbar=False)
+    # st.pyplot(fig_cm)
+
 
 # Halaman Rekomendasi Musik
 elif halaman == "Rekomendasi Musik":
