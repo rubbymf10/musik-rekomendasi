@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
-# --- Styling dark mode ala Spotify ---
+# --- Styling dark mode ---
 st.markdown("""
     <style>
     /* Background & font */
@@ -161,7 +161,7 @@ with st.sidebar:
     st.markdown('<h2 style="color:#1DB954; margin-bottom: 15px;">🎵 Dashboard</h2>', unsafe_allow_html=True)
     halaman = st.radio("", ["Beranda", "Distribusi Musik", "Rekomendasi Musik"], index=0, key="page_select")
 
-# Fungsi buat card musik seperti Spotify dengan simbol musik
+# Fungsi buat card musik dengan simbol musik
 def music_card(title, artist, popularity):
     st.markdown(f"""
     <div class="music-card">
