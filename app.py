@@ -67,6 +67,8 @@ model, tfidf_genre, tfidf_subgenre, scaler = train_model(df_clean)
 # Session state for history
 if 'history' not in st.session_state:
     st.session_state.history = []
+if 'recommendation_table' not in st.session_state:
+    st.session_state.recommendation_table = pd.DataFrame()
 
 # Navigasi
 st.sidebar.title("Navigasi")
@@ -84,6 +86,12 @@ if halaman == "Beranda":
         st.table(pd.DataFrame(st.session_state.history))
     else:
         st.info("Belum ada pencarian.")
+
+    st.subheader("🎧 Rekomendasi Genre Terakhir")
+    if not st.session_state.recommendation_table.empty:
+        st.dataframe(st.session_state.recommendation_table[['judul_musik', 'artist', 'genre', 'popularity']])
+    else:
+        st.info("Belum ada rekomendasi genre ditampilkan.")
 
 # Halaman Distribusi Musik
 elif halaman == "Distribusi Musik":
@@ -138,17 +146,20 @@ elif halaman == "Rekomendasi Musik":
             st.success(f"Musik '{judul}' oleh {artist} diprediksi memiliki popularitas: **{kategori}**")
 
             # Tambahkan ke riwayat
+            df_rekomendasi = df_clean[df_clean['genre'].str.lower() == genre.lower()]
+            df_rekomendasi = df_rekomendasi.sort_values(by='popularity', ascending=False).head(5)
+
             st.session_state.history.append({
                 'Judul': judul,
                 'Artis': artist,
                 'Genre': genre,
                 'Subgenre': subgenre,
-                'Prediksi': kategori
+                'Prediksi': kategori,
+                'Rekomendasi': ', '.join(df_rekomendasi['judul_musik'].head(3).tolist())
             })
 
-            # Rekomendasi serupa berdasarkan genre dan urut popularitas
-            df_rekomendasi = df_clean[df_clean['genre'].str.lower() == genre.lower()]
-            df_rekomendasi = df_rekomendasi.sort_values(by='popularity', ascending=False).head(5)
+            # Simpan tabel rekomendasi terakhir untuk ditampilkan di Beranda
+            st.session_state.recommendation_table = df_rekomendasi
 
             st.subheader("🎧 Musik Serupa Berdasarkan Genre")
             if not df_rekomendasi.empty:
