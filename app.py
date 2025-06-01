@@ -9,31 +9,27 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
-# --- Styling dark mode ala Spotify dengan sidebar hijau ---
+# --- Styling dark mode ala Spotify ---
 st.markdown("""
     <style>
-    /* Background utama dan font */
+    /* Background & font */
     .main, .block-container {
         background-color: #121212;
         color: #FFFFFF;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    /* Sidebar background hijau Spotify */
-    .css-1d391kg {
-        background-color: #1DB954;
-    }
-    .css-1d391kg .css-14xtw13 {
-        color: #FFFFFF;
-    }
-    /* Judul */
+    /* Sidebar */
+    .css-1d391kg {background-color: #181818;}
+    .css-1d391kg .css-14xtw13 {color: #b3b3b3;}
+    /* Title */
     h1, h2, h3, h4 {
         color: #1DB954;
     }
-    /* Dataframe border */
+    /* Dataframe */
     .dataframe tbody tr th, .dataframe tbody tr td {
         border-color: #333333;
     }
-    /* Tombol */
+    /* Buttons */
     button[kind="primary"] {
         background-color: #1DB954;
         color: #FFFFFF;
@@ -60,7 +56,7 @@ st.markdown("""
       background-color: #1DB954;
       border-radius: 4px;
     }
-    /* Card musik */
+    /* Card musik sederhana */
     .music-card {
         background-color: #282828;
         border-radius: 8px;
@@ -71,16 +67,18 @@ st.markdown("""
         gap: 12px;
         cursor: pointer;
         transition: background-color 0.2s ease;
-        color: white;
     }
     .music-card:hover {
-        background-color: #1DB954;
-        color: #000000;
+        background-color: #333333;
     }
     .music-cover {
         width: 50px;
         height: 50px;
-        background: #555555;
+        color: #1DB954;
+        font-size: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         border-radius: 6px;
         flex-shrink: 0;
     }
@@ -160,14 +158,14 @@ if 'recommendation_table' not in st.session_state:
 
 # Sidebar dengan icon sederhana
 with st.sidebar:
-    st.markdown('<h2 style="color:#FFFFFF; margin-bottom: 15px;">🎵 Music Recommendations</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:#1DB954; margin-bottom: 15px;">🎵 Music Recommendations</h2>', unsafe_allow_html=True)
     halaman = st.radio("", ["Beranda", "Distribusi Musik", "Rekomendasi Musik"], index=0, key="page_select")
 
-# Fungsi buat card musik seperti Spotify
+# Fungsi buat card musik seperti Spotify dengan simbol musik
 def music_card(title, artist, popularity):
     st.markdown(f"""
     <div class="music-card">
-        <div class="music-cover"></div>
+        <div class="music-cover">🎵</div>
         <div class="music-info">
             <p class="music-title">{title}</p>
             <p class="music-artist">{artist}</p>
