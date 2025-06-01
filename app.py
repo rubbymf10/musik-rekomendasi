@@ -79,17 +79,20 @@ if halaman == "Beranda":
     st.title("🎵 Beranda Musik Populer")
     st.subheader("10 Musik Terpopuler")
     top10 = df.sort_values(by='popularity', ascending=False).head(10)[['judul_musik', 'artist', 'popularity']]
-    st.dataframe(top10)
+    st.dataframe(top10.style.format({'popularity': '{:.0f}'}))
 
     st.subheader("Riwayat Pencarian Rekomendasi")
     if st.session_state.history:
-        st.table(pd.DataFrame(st.session_state.history))
+        st.dataframe(pd.DataFrame(st.session_state.history))
     else:
         st.info("Belum ada pencarian.")
 
     st.subheader("🎧 Rekomendasi Genre Terakhir")
     if not st.session_state.recommendation_table.empty:
-        st.dataframe(st.session_state.recommendation_table[['judul_musik', 'artist', 'genre', 'popularity']])
+        st.dataframe(
+            st.session_state.recommendation_table[['judul_musik', 'artist', 'genre', 'popularity']]
+            .sort_values(by='popularity', ascending=False)
+            .style.format({'popularity': '{:.0f}'}))
     else:
         st.info("Belum ada rekomendasi genre ditampilkan.")
 
@@ -163,6 +166,7 @@ elif halaman == "Rekomendasi Musik":
 
             st.subheader("🎧 Musik Serupa Berdasarkan Genre")
             if not df_rekomendasi.empty:
-                st.dataframe(df_rekomendasi[['judul_musik', 'artist', 'genre', 'popularity']])
+                st.dataframe(df_rekomendasi[['judul_musik', 'artist', 'genre', 'popularity']]
+                             .style.format({'popularity': '{:.0f}'}))
             else:
                 st.info("Tidak ditemukan musik serupa untuk genre tersebut.")
