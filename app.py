@@ -158,7 +158,7 @@ if 'recommendation_table' not in st.session_state:
 
 # Sidebar dengan icon sederhana
 with st.sidebar:
-    st.markdown('<h2 style="color:#1DB954; margin-bottom: 15px;">🎵 Music Recommendations</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:#1DB954; margin-bottom: 15px;">🎵 Dashboard</h2>', unsafe_allow_html=True)
     halaman = st.radio("", ["Beranda", "Distribusi Musik", "Rekomendasi Musik"], index=0, key="page_select")
 
 # Fungsi buat card musik seperti Spotify dengan simbol musik
