@@ -164,8 +164,8 @@ def music_card(title, artist, popularity):
     </div>
     """, unsafe_allow_html=True)
 
+# Halaman Beranda
 if halaman == "Beranda":
-    st.markdown("---")
     st.header("Riwayat Pencarian Rekomendasi")
     if st.session_state.history:
         for h in reversed(st.session_state.history[-5:]):
@@ -187,6 +187,7 @@ if halaman == "Beranda":
         st.session_state.recommendation_table = pd.DataFrame()
         st.experimental_rerun()
 
+    st.markdown("---")
     st.header("Top 10 Musik Terpopuler")
     top10 = df.sort_values(by='popularity', ascending=False).head(10)
     for _, row in top10.iterrows():
