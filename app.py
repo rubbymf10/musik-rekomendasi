@@ -94,7 +94,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Load data
 @st.cache_data
 def load_data():
     df = pd.read_csv('musik.csv')
@@ -179,6 +178,24 @@ if halaman == "Beranda":
         for _, row in top5_by_genre.iterrows():
             music_card(row['judul_musik'], row['artist'], row['popularity'])
 
+elif halaman == "Distribusi Musik":
+    st.header("Distribusi Musik")
+    st.subheader("10 Artis Terpopuler")
+    top_artists = df['artist'].value_counts().head(10)
+    fig1, ax1 = plt.subplots(figsize=(8, 4))
+    sns.barplot(x=top_artists.values, y=top_artists.index, ax=ax1, palette="Greens_d")
+    ax1.set_xlabel('Jumlah Lagu')
+    ax1.set_ylabel('Artis')
+    st.pyplot(fig1)
+
+    st.subheader("10 Genre Terpopuler")
+    top_genres = df['genre'].value_counts().head(10)
+    fig2, ax2 = plt.subplots(figsize=(8, 4))
+    sns.barplot(x=top_genres.values, y=top_genres.index, ax=ax2, palette="Greens_d")
+    ax2.set_xlabel('Jumlah Lagu')
+    ax2.set_ylabel('Genre')
+    st.pyplot(fig2)
+
     st.markdown("---")
     st.header("Riwayat Pencarian Rekomendasi")
     if st.session_state.history:
@@ -201,34 +218,13 @@ if halaman == "Beranda":
         st.session_state.recommendation_table = pd.DataFrame()
         st.experimental_rerun()
 
-elif halaman == "Distribusi Musik":
-    st.header("Distribusi Musik")
-    st.subheader("10 Artis Terpopuler")
-    top_artists = df['artist'].value_counts().head(10)
-    fig1, ax1 = plt.subplots(figsize=(8, 4))
-    sns.barplot(x=top_artists.values, y=top_artists.index, ax=ax1, palette="Greens_d")
-    ax1.set_xlabel('Jumlah Lagu')
-    ax1.set_ylabel('Artis')
-    st.pyplot(fig1)
-
-    st.subheader("10 Genre Terpopuler")
-    top_genres = df['genre'].value_counts().head(10)
-    fig2, ax2 = plt.subplots(figsize=(8, 4))
-    sns.barplot(x=top_genres.values, y=top_genres.index, ax=ax2, palette="Greens_d")
-    ax2.set_xlabel('Jumlah Lagu')
-    ax2.set_ylabel('Genre')
-    st.pyplot(fig2)
-
-    cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
-    # Uncomment below to show Confusion Matrix
-    # disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=label_enc.classes_)
-    # fig_cm, ax_cm = plt.subplots(figsize=(6,6))
-    # disp.plot(ax=ax_cm, cmap=plt.cm.Greens, colorbar=False)
-    # st.pyplot(fig_cm)
-
 elif halaman == "Rekomendasi Musik":
     st.header("Rekomendasi Musik Berdasarkan Judul")
-    judul = st.text_input("Masukkan Judul Musik")
+
+    judul_list = df_clean['judul_musik'].dropna().unique()[:50]
+    pilihan = st.selectbox("Atau pilih dari daftar judul musik", options=judul_list)
+    manual_input = st.text_input("Atau ketik judul musik secara manual (opsional)")
+    judul = manual_input if manual_input.strip() else pilihan
 
     if st.button("Rekomendasikan"):
         if not judul.strip():
