@@ -12,24 +12,19 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 # --- Styling dark mode ---
 st.markdown("""
     <style>
-    /* Background & font */
     .main, .block-container {
         background-color: #121212;
         color: #FFFFFF;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    /* Sidebar */
     .css-1d391kg {background-color: #181818;}
     .css-1d391kg .css-14xtw13 {color: #b3b3b3;}
-    /* Title */
     h1, h2, h3, h4 {
         color: #1DB954;
     }
-    /* Dataframe */
     .dataframe tbody tr th, .dataframe tbody tr td {
         border-color: #333333;
     }
-    /* Buttons */
     button[kind="primary"] {
         background-color: #1DB954;
         color: #FFFFFF;
@@ -40,7 +35,6 @@ st.markdown("""
     button[kind="primary"]:hover {
         background-color: #1ed760;
     }
-    /* Input box */
     .stTextInput>div>div>input {
         background-color: #222222;
         color: #FFFFFF;
@@ -48,7 +42,6 @@ st.markdown("""
         border-radius: 8px;
         padding: 8px;
     }
-    /* Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
     }
@@ -56,7 +49,6 @@ st.markdown("""
       background-color: #1DB954;
       border-radius: 4px;
     }
-    /* Card musik sederhana */
     .music-card {
         background-color: #282828;
         border-radius: 8px;
@@ -156,12 +148,10 @@ if 'history' not in st.session_state:
 if 'recommendation_table' not in st.session_state:
     st.session_state.recommendation_table = pd.DataFrame()
 
-# Sidebar dengan icon sederhana
 with st.sidebar:
     st.markdown('<h2 style="color:#1DB954; margin-bottom: 15px;">🎵 Dashboard</h2>', unsafe_allow_html=True)
     halaman = st.radio("", ["Beranda", "Distribusi Musik", "Rekomendasi Musik"], index=0, key="page_select")
 
-# Fungsi buat card musik dengan simbol musik
 def music_card(title, artist, popularity):
     st.markdown(f"""
     <div class="music-card">
@@ -174,7 +164,6 @@ def music_card(title, artist, popularity):
     </div>
     """, unsafe_allow_html=True)
 
-# Halaman Beranda
 if halaman == "Beranda":
     st.header("Top 10 Musik Terpopuler")
     top10 = df.sort_values(by='popularity', ascending=False).head(10)
@@ -182,9 +171,18 @@ if halaman == "Beranda":
         music_card(row['judul_musik'], row['artist'], row['popularity'])
 
     st.markdown("---")
+    st.header("5 Musik Terpopuler dari Setiap Genre")
+    genre_list = df['genre'].dropna().unique()
+    for genre in genre_list:
+        st.subheader(f"🎶 Genre: {genre}")
+        top5_by_genre = df[df['genre'] == genre].sort_values(by='popularity', ascending=False).head(5)
+        for _, row in top5_by_genre.iterrows():
+            music_card(row['judul_musik'], row['artist'], row['popularity'])
+
+    st.markdown("---")
     st.header("Riwayat Pencarian Rekomendasi")
     if st.session_state.history:
-        for h in reversed(st.session_state.history[-5:]):  # show last 5 searches
+        for h in reversed(st.session_state.history[-5:]):
             st.markdown(f"- **{h['Judul']}** oleh {h['Artis']} (Genre: {h['Genre']}, Prediksi: {h['Prediksi']})")
     else:
         st.info("Belum ada pencarian.")
@@ -203,10 +201,8 @@ if halaman == "Beranda":
         st.session_state.recommendation_table = pd.DataFrame()
         st.experimental_rerun()
 
-# Halaman Distribusi Musik
 elif halaman == "Distribusi Musik":
     st.header("Distribusi Musik")
-
     st.subheader("10 Artis Terpopuler")
     top_artists = df['artist'].value_counts().head(10)
     fig1, ax1 = plt.subplots(figsize=(8, 4))
@@ -223,17 +219,13 @@ elif halaman == "Distribusi Musik":
     ax2.set_ylabel('Genre')
     st.pyplot(fig2)
 
-    # Hitung confusion matrix tanpa menampilkannya
     cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
-
-    # Jika di masa depan ingin ditampilkan, bisa aktifkan baris di bawah ini:
+    # Uncomment below to show Confusion Matrix
     # disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=label_enc.classes_)
     # fig_cm, ax_cm = plt.subplots(figsize=(6,6))
     # disp.plot(ax=ax_cm, cmap=plt.cm.Greens, colorbar=False)
     # st.pyplot(fig_cm)
 
-
-# Halaman Rekomendasi Musik
 elif halaman == "Rekomendasi Musik":
     st.header("Rekomendasi Musik Berdasarkan Judul")
     judul = st.text_input("Masukkan Judul Musik")
