@@ -15,7 +15,6 @@ st.markdown("""
     .main, .block-container {
         background-color: #121212;
         color: #FFFFFF;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     h1, h2, h3, h4 {
         color: #1DB954;
@@ -223,7 +222,6 @@ elif halaman == "Rekomendasi Musik":
         if not judul.strip():
             st.warning("Silakan masukkan judul musik terlebih dahulu.")
         else:
-            # Cari kemiripan judul
             judul_vector = tfidf_title.transform([judul])
             similarities = cosine_similarity(judul_vector, title_tfidf).flatten()
             top_index = similarities.argsort()[::-1][0]
@@ -252,8 +250,10 @@ elif halaman == "Rekomendasi Musik":
             pred = model.predict(X_input)[0]
             kategori = label_enc.inverse_transform([pred])[0]
 
-            st.success(f"Input '{judul}' paling mirip dengan lagu '{judul_terdekat}' oleh {artist}.")
-            st.success(f"Musik ini diprediksi memiliki popularitas: **{kategori}**")
+            # 👉 Output dengan keterangan genre
+            st.success(f"Input **'{judul}'** paling mirip dengan lagu **'{judul_terdekat}'** oleh **{artist}**.")
+            st.info(f"Genre lagu tersebut adalah **{genre}**.")
+            st.success(f"Musik ini diprediksi memiliki tingkat popularitas: **{kategori}**.")
 
             df_rekom_genre = df_clean[df_clean['genre'].str.lower() == genre.lower()]
             top_indices = similarities.argsort()[::-1][1:6]
