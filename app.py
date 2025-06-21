@@ -141,13 +141,13 @@ if 'recommendation_table' not in st.session_state:
     st.session_state.recommendation_table = pd.DataFrame()
 
 with st.sidebar:
-    st.markdown('<h2 style="color:#1DB954; margin-bottom: 15px;">🎵 Dashboard</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:#1DB954; margin-bottom: 15px;">\ud83c\udfb5 Dashboard</h2>', unsafe_allow_html=True)
     halaman = st.radio("", ["Beranda", "Distribusi Musik", "Rekomendasi Musik"], index=0, key="page_select")
 
 def music_card(title, artist, popularity):
     st.markdown(f"""
     <div class="music-card">
-        <div class="music-cover">🎵</div>
+        <div class="music-cover">\ud83c\udfb5</div>
         <div class="music-info">
             <p class="music-title">{title}</p>
             <p class="music-artist">{artist}</p>
@@ -166,7 +166,7 @@ if halaman == "Beranda":
     st.header("5 Musik Terpopuler dari Setiap Genre")
     genre_list = df['genre'].dropna().unique()
     for genre in genre_list:
-        st.subheader(f"🎶 Genre: {genre}")
+        st.subheader(f"\ud83c\udfb6 Genre: {genre}")
         top5_by_genre = df[df['genre'] == genre].sort_values(by='popularity', ascending=False).head(5)
         for _, row in top5_by_genre.iterrows():
             music_card(row['judul_musik'], row['artist'], row['popularity'])
@@ -180,7 +180,7 @@ if halaman == "Beranda":
         st.info("Belum ada pencarian.")
 
     st.markdown("---")
-    st.header("🎧 Rekomendasi Genre Terakhir")
+    st.header("\ud83c\udfa7 Rekomendasi Genre Terakhir")
     if not st.session_state.recommendation_table.empty:
         df_show = st.session_state.recommendation_table.sort_values(by='popularity', ascending=False)
         for _, row in df_show.iterrows():
@@ -223,7 +223,6 @@ elif halaman == "Rekomendasi Musik":
         if not judul.strip():
             st.warning("Silakan masukkan judul musik terlebih dahulu.")
         else:
-            # Cari kemiripan judul
             judul_vector = tfidf_title.transform([judul])
             similarities = cosine_similarity(judul_vector, title_tfidf).flatten()
             top_index = similarities.argsort()[::-1][0]
@@ -272,6 +271,6 @@ elif halaman == "Rekomendasi Musik":
 
             st.session_state.recommendation_table = df_rekomendasi
 
-            st.subheader("🎧 Musik Serupa Berdasarkan Genre & Judul")
+            st.subheader("\ud83c\udfa7 Musik Serupa Berdasarkan Genre & Judul")
             for _, row in df_rekomendasi.sort_values(by='popularity', ascending=False).iterrows():
                 music_card(row['judul_musik'], row['artist'], row['popularity'])
