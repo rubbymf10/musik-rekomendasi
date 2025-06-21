@@ -7,7 +7,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.metrics.pairwise import cosine_similarity
 
 # --- Styling dark mode ---
@@ -18,13 +17,8 @@ st.markdown("""
         color: #FFFFFF;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .css-1d391kg {background-color: #181818;}
-    .css-1d391kg .css-14xtw13 {color: #b3b3b3;}
     h1, h2, h3, h4 {
         color: #1DB954;
-    }
-    .dataframe tbody tr th, .dataframe tbody tr td {
-        border-color: #333333;
     }
     button[kind="primary"] {
         background-color: #1DB954;
@@ -42,13 +36,6 @@ st.markdown("""
         border: none;
         border-radius: 8px;
         padding: 8px;
-    }
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background-color: #1DB954;
-      border-radius: 4px;
     }
     .music-card {
         background-color: #282828;
@@ -236,57 +223,55 @@ elif halaman == "Rekomendasi Musik":
         if not judul.strip():
             st.warning("Silakan masukkan judul musik terlebih dahulu.")
         else:
-            lagu = df_clean[df_clean['judul_musik'].str.lower() == judul.lower()]
-            if lagu.empty:
-                st.warning("Judul tidak ditemukan dalam dataset.")
-            else:
-                fitur = lagu.iloc[0]
-                genre = fitur['genre']
-                subgenre = fitur['subgenre']
-                tempo = fitur['tempo']
-                duration_ms = fitur['duration_ms']
-                energy = fitur['energy']
-                danceability = fitur['danceability']
-                artist = fitur['artist']
+            # Cari kemiripan judul
+            judul_vector = tfidf_title.transform([judul])
+            similarities = cosine_similarity(judul_vector, title_tfidf).flatten()
+            top_index = similarities.argsort()[::-1][0]
+            lagu = df_clean.iloc[[top_index]]
 
-                genre_tfidf = tfidf_genre.transform([genre])
-                subgenre_tfidf = tfidf_subgenre.transform([subgenre])
-                features_num = scaler.transform([[tempo, duration_ms, energy, danceability]])
+            fitur = lagu.iloc[0]
+            genre = fitur['genre']
+            subgenre = fitur['subgenre']
+            tempo = fitur['tempo']
+            duration_ms = fitur['duration_ms']
+            energy = fitur['energy']
+            danceability = fitur['danceability']
+            artist = fitur['artist']
+            judul_terdekat = fitur['judul_musik']
 
-                X_input = np.hstack([
-                    genre_tfidf.toarray(),
-                    subgenre_tfidf.toarray(),
-                    features_num
-                ])
+            genre_tfidf = tfidf_genre.transform([genre])
+            subgenre_tfidf = tfidf_subgenre.transform([subgenre])
+            features_num = scaler.transform([[tempo, duration_ms, energy, danceability]])
 
-                pred = model.predict(X_input)[0]
-                kategori = label_enc.inverse_transform([pred])[0]
+            X_input = np.hstack([
+                genre_tfidf.toarray(),
+                subgenre_tfidf.toarray(),
+                features_num
+            ])
 
-                st.success(f"Musik '{judul}' oleh {artist} diprediksi memiliki popularitas: **{kategori}**")
+            pred = model.predict(X_input)[0]
+            kategori = label_enc.inverse_transform([pred])[0]
 
-                # Rekomendasi berdasarkan genre
-                df_rekom_genre = df_clean[df_clean['genre'].str.lower() == genre.lower()]
+            st.success(f"Input '{judul}' paling mirip dengan lagu '{judul_terdekat}' oleh {artist}.")
+            st.success(f"Musik ini diprediksi memiliki popularitas: **{kategori}**")
 
-                # Rekomendasi berdasarkan kemiripan judul
-                judul_vector = tfidf_title.transform([judul])
-                similarities = cosine_similarity(judul_vector, title_tfidf).flatten()
-                top_indices = similarities.argsort()[::-1][1:6]
-                df_rekom_judul = df_clean.iloc[top_indices]
+            df_rekom_genre = df_clean[df_clean['genre'].str.lower() == genre.lower()]
+            top_indices = similarities.argsort()[::-1][1:6]
+            df_rekom_judul = df_clean.iloc[top_indices]
 
-                # Gabungkan dan hapus duplikat
-                df_rekomendasi = pd.concat([df_rekom_genre, df_rekom_judul]).drop_duplicates(subset='judul_musik')
+            df_rekomendasi = pd.concat([df_rekom_genre, df_rekom_judul]).drop_duplicates(subset='judul_musik')
 
-                st.session_state.history.append({
-                    'Judul': judul,
-                    'Artis': artist,
-                    'Genre': genre,
-                    'Subgenre': subgenre,
-                    'Prediksi': kategori,
-                    'Rekomendasi': ', '.join(df_rekomendasi['judul_musik'].head(3).tolist())
-                })
+            st.session_state.history.append({
+                'Judul': judul,
+                'Artis': artist,
+                'Genre': genre,
+                'Subgenre': subgenre,
+                'Prediksi': kategori,
+                'Rekomendasi': ', '.join(df_rekomendasi['judul_musik'].head(3).tolist())
+            })
 
-                st.session_state.recommendation_table = df_rekomendasi
+            st.session_state.recommendation_table = df_rekomendasi
 
-                st.subheader("🎧 Musik Serupa Berdasarkan Genre & Judul")
-                for _, row in df_rekomendasi.sort_values(by='popularity', ascending=False).iterrows():
-                    music_card(row['judul_musik'], row['artist'], row['popularity'])
+            st.subheader("🎧 Musik Serupa Berdasarkan Genre & Judul")
+            for _, row in df_rekomendasi.sort_values(by='popularity', ascending=False).iterrows():
+                music_card(row['judul_musik'], row['artist'], row['popularity'])
