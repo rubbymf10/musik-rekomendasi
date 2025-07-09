@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# --- Dark Mode Styling ---
+# --- Styling dark mode ---
 st.markdown("""
     <style>
     .main, .block-container {
@@ -122,13 +122,6 @@ def train_model(df_clean):
     lyrics_tfidf = tfidf_lyrics.fit_transform(df_clean['lyrics'].fillna(''))
     album_tfidf = tfidf_album.fit_transform(df_clean['album'])
 
-    df_genre = pd.DataFrame(genre_tfidf.toarray(), columns=tfidf_genre.get_feature_names_out(), index=df_clean.index)
-    df_subgenre = pd.DataFrame(subgenre_tfidf.toarray(), columns=tfidf_subgenre.get_feature_names_out(), index=df_clean.index)
-    df_title = pd.DataFrame(title_tfidf.toarray(), columns=tfidf_title.get_feature_names_out(), index=df_clean.index)
-    df_artist = pd.DataFrame(artist_tfidf.toarray(), columns=tfidf_artist.get_feature_names_out(), index=df_clean.index)
-    df_lyrics = pd.DataFrame(lyrics_tfidf.toarray(), columns=tfidf_lyrics.get_feature_names_out(), index=df_clean.index)
-    df_album = pd.DataFrame(album_tfidf.toarray(), columns=tfidf_album.get_feature_names_out(), index=df_clean.index)
-
     features_num = ['tempo', 'duration_ms', 'energy', 'danceability']
     scaler = MinMaxScaler()
     df_num_scaled = pd.DataFrame(scaler.fit_transform(df_clean[features_num]), columns=features_num, index=df_clean.index)
@@ -154,7 +147,7 @@ if 'recommendation_table' not in st.session_state:
 # --- Sidebar ---
 with st.sidebar:
     st.markdown('<h2 style="color:#1DB954; margin-bottom: 15px;">\U0001F3B5 Dashboard</h2>', unsafe_allow_html=True)
-    page = st.radio("", ["Home", "Music Recommendation", "History"], index=0, key="page_select")
+    halaman = st.radio("", ["Home", "Music Recommendation", "History"], index=0, key="page_select")
 
 # --- Music Card UI ---
 def music_card(title, artist, popularity):
@@ -170,14 +163,14 @@ def music_card(title, artist, popularity):
     """, unsafe_allow_html=True)
 
 # --- Home Page ---
-if page == "Home":
-    st.header("Top 10 Most Popular Songs")
+if halaman == "Home":
+    st.header("Top 10 Most Popular Music")
     top10 = df.sort_values(by='popularity', ascending=False).head(10)
     for _, row in top10.iterrows():
         music_card(row['judul_musik'], row['artist'], row['popularity'])
 
     st.markdown("---")
-    st.header("Top 5 Songs from Each Genre")
+    st.header("Top 5 Popular Songs from Each Genre")
     genre_list = df['genre'].dropna().unique()
     for genre in genre_list:
         st.subheader(f"🎶 Genre: {genre}")
@@ -186,11 +179,11 @@ if page == "Home":
             music_card(row['judul_musik'], row['artist'], row['popularity'])
 
 # --- History Page ---
-if page == "History":
+if halaman == "History":
     st.header("Recommendation Search History")
     if st.session_state.history:
         for h in reversed(st.session_state.history[-5:]):
-            st.markdown(f"- **{h['Title']}** by {h['Artist']} (Genre: {h['Genre']}, Prediction: {h['Prediction']})")
+            st.markdown(f"- **{h['Judul']}** by {h['Artis']} (Genre: {h['Genre']}, Prediction: {h['Prediksi']})")
     else:
         st.info("No search history yet.")
 
@@ -201,7 +194,7 @@ if page == "History":
         for _, row in df_show.iterrows():
             music_card(row['judul_musik'], row['artist'], row['popularity'])
     else:
-        st.info("No genre recommendations yet.")
+        st.info("No genre-based recommendations shown.")
 
     if st.button("Reset Search History"):
         st.session_state.history = []
@@ -210,39 +203,39 @@ if page == "History":
         st.stop()
 
 # --- Music Recommendation Page ---
-if page == "Music Recommendation":
+if halaman == "Music Recommendation":
     st.header("Music Recommendation Based on Title")
 
-    title_list = df_clean['judul_musik'].dropna().unique()
-    selection = st.selectbox("Select from the music title list", options=title_list)
-    manual_input = st.text_input("Or type the music title manually (optional)")
-    title = manual_input if manual_input.strip() else selection
+    judul_list = df_clean['judul_musik'].dropna().unique()
+    pilihan = st.selectbox("Choose from the list of music titles", options=judul_list)
+    manual_input = st.text_input("Or type the title manually (optional)")
+    judul = manual_input if manual_input.strip() else pilihan
 
     if st.button("Recommend"):
-        if not title.strip():
+        if not judul.strip():
             st.warning("Please enter a music title first.")
         else:
-            title_vector = tfidf_title.transform([title])
-            similarities = cosine_similarity(title_vector, title_tfidf).flatten()
+            judul_vector = tfidf_title.transform([judul])
+            similarities = cosine_similarity(judul_vector, title_tfidf).flatten()
             top_index = similarities.argsort()[::-1][0]
-            song = df_clean.iloc[[top_index]]
+            lagu = df_clean.iloc[[top_index]]
 
-            features = song.iloc[0]
-            genre = features['genre']
-            subgenre = features['subgenre']
-            tempo = features['tempo']
-            duration_ms = features['duration_ms']
-            energy = features['energy']
-            danceability = features['danceability']
-            artist = features['artist']
-            album = features['album']
-            lyrics = features['lyrics'] if pd.notna(features['lyrics']) else ''
-            matched_title = features['judul_musik']
+            fitur = lagu.iloc[0]
+            genre = fitur['genre']
+            subgenre = fitur['subgenre']
+            tempo = fitur['tempo']
+            duration_ms = fitur['duration_ms']
+            energy = fitur['energy']
+            danceability = fitur['danceability']
+            artist = fitur['artist']
+            album = fitur['album']
+            lyrics = fitur['lyrics'] if pd.notna(fitur['lyrics']) else ''
+            judul_terdekat = fitur['judul_musik']
 
             X_input = np.hstack([
                 tfidf_genre.transform([genre]).toarray(),
                 tfidf_subgenre.transform([subgenre]).toarray(),
-                tfidf_title.transform([matched_title]).toarray(),
+                tfidf_title.transform([judul_terdekat]).toarray(),
                 tfidf_artist.transform([artist]).toarray(),
                 tfidf_lyrics.transform([lyrics]).toarray(),
                 tfidf_album.transform([album]).toarray(),
@@ -250,22 +243,22 @@ if page == "Music Recommendation":
             ])
 
             pred = model.predict(X_input)[0]
-            category = label_enc.inverse_transform([pred])[0]
+            kategori = label_enc.inverse_transform([pred])[0]
 
-            st.success(f"The input **'{title}'** is most similar to the song **'{matched_title}'** by **{artist}**.")
-            st.info(f"The genre of the song is **{genre}**.")
-            st.success(f"This song is predicted to have popularity: **{category}**.")
+            st.success(f"The input **'{judul}'** is most similar to **'{judul_terdekat}'** by **{artist}**.")
+            st.info(f"The genre of this song is **{genre}**.")
+            st.success(f"This music is predicted to have popularity level: **{kategori}**.")
 
             df_rekom_genre = df_clean[df_clean['genre'].str.lower() == genre.lower()].sort_values(by='popularity', ascending=False).head(5)
-            st.subheader("🎧 Recommendations Based on Same Genre")
+            st.subheader("🎧 Recommendations Based on Similar Genre")
             for _, row in df_rekom_genre.iterrows():
                 music_card(row['judul_musik'], row['artist'], row['popularity'])
                 st.caption(f"Genre: {row['genre']}")
 
             top_indices = similarities.argsort()[::-1][1:6]
-            df_rekom_title = df_clean.iloc[top_indices]
+            df_rekom_judul = df_clean.iloc[top_indices]
             st.subheader("\U0001F3A7 Recommendations Based on Title Similarity")
-            for _, row in df_rekom_title.sort_values(by='popularity', ascending=False).iterrows():
+            for _, row in df_rekom_judul.sort_values(by='popularity', ascending=False).iterrows():
                 music_card(row['judul_musik'], row['artist'], row['popularity'])
 
             if lyrics.strip():
@@ -279,16 +272,16 @@ if page == "Music Recommendation":
                     music_card(row['judul_musik'], row['artist'], row['popularity'])
             else:
                 st.subheader("\U0001F3A7 Recommendations Based on Lyric Similarity")
-                st.info("The song has no lyrics to compare.")
+                st.info("This song has no lyrics to compare.")
 
-            df_recommendation = pd.concat([df_rekom_genre, df_rekom_title, df_rekom_lyrics]).drop_duplicates(subset='judul_musik')
-            st.session_state.recommendation_table = df_recommendation
+            df_rekomendasi = pd.concat([df_rekom_genre, df_rekom_judul, df_rekom_lyrics]).drop_duplicates(subset='judul_musik')
+            st.session_state.recommendation_table = df_rekomendasi
 
             st.session_state.history.append({
-                'Title': title,
-                'Artist': artist,
+                'Judul': judul,
+                'Artis': artist,
                 'Genre': genre,
                 'Subgenre': subgenre,
-                'Prediction': category,
-                'Recommendations': ', '.join(df_recommendation['judul_musik'].head(3).tolist())
+                'Prediksi': kategori,
+                'Rekomendasi': ', '.join(df_rekomendasi['judul_musik'].head(3).tolist())
             })
